@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>kmdp-ext-api</artifactId>
+    <groupId>edu.mayo.kmdp</groupId>
+    <version>10.0.9-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>kmdp-spring-monitoring</artifactId>
+  <version>5.2.8-SNAPSHOT</version>
+
+  <packaging>war</packaging>
+
+  <name>KMDP :: SPRING :: MONITORING</name>
+
+  <properties>
+    <failOnMissingWebXml>false</failOnMissingWebXml>
+  </properties>
+
+  <dependencies>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.swagger</groupId>
+        <artifactId>swagger-codegen-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>gen-code</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <language>spring</language>
+              <generateSupportingFiles>false</generateSupportingFiles>
+              <generateModels>true</generateModels>
+              <apiPackage>edu.mayo.kmdp.health</apiPackage>
+              <modelPackage>edu.mayo.kmdp.health.datatype</modelPackage>
+              <addCompileSourceRoot>true</addCompileSourceRoot>
+              <inputSpec>
+                ${project.basedir}/openapi/edu/mayo/kmdp/monitor/spec/kmdpMonitoring.swagger.yaml
+              </inputSpec>
+              <configOptions>
+                <delegatePattern>true</delegatePattern>
+                <useTags>true</useTags>
+                <dateLibrary>java8</dateLibrary>
+                <controllersOnly>false</controllersOnly>
+              </configOptions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

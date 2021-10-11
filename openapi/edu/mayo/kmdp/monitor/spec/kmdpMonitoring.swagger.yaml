@@ -1,0 +1,253 @@
+swagger: '2.0'
+
+info:
+  version: "1.0.0"
+  title: 'KMDP Endpoint Monitoring API'
+  license:
+    name: Apache License, Version 2.0 
+    url: https://www.apache.org/licenses/LICENSE-2.0.html  
+  description: |
+    Reusable module that can be implemented for Java products using Spring to consolidate like code and surface the health endpoints (health, state, version) within any Java Spring implementation.
+tags:
+  - name: Health
+    description: |
+      Return information about the application including schema version, status, system, version, environment, and components.
+    
+  - name: Version
+    description: |
+      Return the version of the application.
+  
+  - name: State
+    description: |
+      Return the state of the application including schema version, environment, and features.
+  
+paths:
+
+####################################################################################################
+# Health
+####################################################################################################  
+
+  /health:
+    get:
+      tags:
+      - Health
+      summary: Display the health of the application.
+      description: |
+        Return information about the application including schema version, status, system, version, environment, and components.
+      operationId: getHealthData
+      produces:
+        - application/json
+        - application/xml
+      responses:
+        200:
+          description: |
+             A list of application information detailing the status of the system.
+          schema:
+            $ref: '#/definitions/HealthData'
+        500:
+          description: |
+            Unable to determine the health of the application.
+        501:
+          description: |
+            This endpoint has not been implemented for this application.
+
+  ####################################################################################################
+  # Version
+  ####################################################################################################
+
+  /version:
+    get:
+      tags:
+        - Version
+      summary: Display the version of the application.
+      description: |
+        Return the version of the application
+      operationId: getVersionData
+      produces:
+        - application/json
+        - application/xml
+      responses:
+        200:
+          description: |
+            The version of the application
+          schema:
+            $ref: '#/definitions/VersionData'
+        500:
+          description: |
+            Unable to determine the version of the application.
+        501:
+          description: |
+            This endpoint has not been implemented for this application.
+
+  ####################################################################################################
+  # State
+  ####################################################################################################
+
+  /state:
+    get:
+      tags:
+        - State
+      summary: Display the state of the application.
+      description: |
+        Return information about the application state
+      operationId: getStateData
+      produces:
+        - application/json
+        - application/xml
+      responses:
+        200:
+          description: |
+            A list of application information detailing the state of the system.
+          schema:
+            $ref: '#/definitions/StateData'
+        500:
+          description: |
+            Unable to determine the state of the application.
+        501:
+          description: |
+            This endpoint has not been implemented for this application.
+
+####################################################################################################
+
+definitions:
+  HealthData:
+    type: object
+    title: The health endpoint schema
+    required:
+      - schema
+      - status
+      - system
+      - version
+      - env
+    properties:
+      schema:
+        $ref: '#/definitions/schema'
+      status:
+        $ref: '#/definitions/status'
+      system:
+        $ref: '#/definitions/system'
+      version:
+        $ref: '#/definitions/version'
+      release:
+        $ref: '#/definitions/release'
+      message:
+        $ref: '#/definitions/message'
+      components:
+        $ref: '#/definitions/components'
+
+  VersionData:
+    type: object
+    title: The version endpoint schema
+    required:
+      - version
+    properties:
+      version:
+        $ref: '#/definitions/version'
+
+  StateData:
+    type: object
+    title: The state endpoint schema
+    required:
+      - schema
+      - logging
+      - features
+    properties:
+      schema:
+        $ref: '#/definitions/schema'
+      logging:
+        $ref: '#/definitions/environmentConfiguration'
+      features:
+        $ref: '#/definitions/features'
+
+  schema:
+    type: object
+    required:
+      - version
+      - url
+    properties:
+      version:
+        type: string
+      url:
+        title: The health endpoint schema
+        type: string
+
+  status:
+    description: The primary signal as to the health of the service or application.
+    enum:
+      - Up
+      - Down
+      - Impaired
+    title: System status
+    type: string
+
+  system:
+    type: object
+    title: The system schema
+    required:
+      - id
+      - url
+      - display
+    properties:
+      id:
+        pattern: CI*
+        title: The ServiceNow configuration item ID
+        type: string
+      url:
+        title: The ServiceNow configuration item URI
+        type: string
+      display:
+        title: A human-readable display name for the system
+        type: string
+
+  version:
+    title: The current version of the system
+    type: string
+
+  release:
+    enum:
+      - dev
+      - test
+      - int
+      - uat
+      - pro
+    title: The current application environment
+    type: string
+
+  message:
+    description: A field for elaborating on exceptions or impairments within the system.
+    title: Exception/impairment message
+    type: string
+
+  components:
+    type: array
+    title: The components schema
+    description: The components associated with this instance.
+    default: [ ]
+
+  environmentConfiguration:
+    type: object
+    required:
+      - splunkToken
+      - splunkUrl
+      - splunkSourceType
+      - splunkIndexName
+    properties:
+      splunkToken:
+        type: string
+      splunkUrl:
+        type: string
+      splunkSourceType:
+        type: string
+      splunkIndexName:
+        type: string
+
+  features:
+    type: object
+    required:
+      - splunkLogging
+      - contextLogging
+    properties:
+      splunkLogging:
+        type: boolean
+      contextLogging:
+        type: boolean
