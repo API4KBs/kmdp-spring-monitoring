@@ -149,7 +149,7 @@ definitions:
     title: The state endpoint schema
     required:
       - schema
-      - logging
+      - environmentConfiguration
       - features
     properties:
       schema:

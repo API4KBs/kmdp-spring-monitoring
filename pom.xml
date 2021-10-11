@@ -16,10 +16,6 @@
 
   <name>KMDP :: SPRING :: MONITORING</name>
 
-  <properties>
-    <failOnMissingWebXml>false</failOnMissingWebXml>
-  </properties>
-
   <dependencies>
   </dependencies>
 
