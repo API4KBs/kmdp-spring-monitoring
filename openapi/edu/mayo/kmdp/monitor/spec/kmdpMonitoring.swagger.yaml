@@ -111,14 +111,14 @@ paths:
 
 definitions:
   HealthData:
+    description: The health endpoint schema
     type: object
-    title: The health endpoint schema
     required:
       - schema
       - status
       - system
       - version
-      - env
+      - deploymentEnvironment
     properties:
       schema:
         $ref: '#/definitions/schema'
@@ -129,15 +129,15 @@ definitions:
       version:
         $ref: '#/definitions/version'
       release:
-        $ref: '#/definitions/release'
+        $ref: '#/definitions/deploymentEnvironment'
       message:
         $ref: '#/definitions/message'
       components:
         $ref: '#/definitions/components'
 
   VersionData:
+    description: The version endpoint schema
     type: object
-    title: The version endpoint schema
     required:
       - version
     properties:
@@ -145,21 +145,22 @@ definitions:
         $ref: '#/definitions/version'
 
   StateData:
+    description: The state endpoint schema
     type: object
-    title: The state endpoint schema
     required:
       - schema
-      - environmentConfiguration
+      - applicationConfiguration
       - features
     properties:
       schema:
         $ref: '#/definitions/schema'
-      logging:
-        $ref: '#/definitions/environmentConfiguration'
+      configurations:
+        $ref: '#/definitions/applicationConfiguration'
       features:
         $ref: '#/definitions/features'
 
   schema:
+    description: The health endpoint schema
     type: object
     required:
       - version
@@ -168,21 +169,19 @@ definitions:
       version:
         type: string
       url:
-        title: The health endpoint schema
         type: string
 
   status:
     description: The primary signal as to the health of the service or application.
+    type: string
     enum:
       - Up
       - Down
       - Impaired
-    title: System status
-    type: string
 
   system:
+    description: The system schema
     type: object
-    title: The system schema
     required:
       - id
       - url
@@ -190,64 +189,47 @@ definitions:
     properties:
       id:
         pattern: CI*
-        title: The ServiceNow configuration item ID
+        description: The ServiceNow configuration item ID
         type: string
       url:
-        title: The ServiceNow configuration item URI
+        description: The ServiceNow configuration item URI
         type: string
       display:
-        title: A human-readable display name for the system
+        description: A human-readable display name for the system
         type: string
 
   version:
-    title: The current version of the system
+    description: The current version of the system
     type: string
 
-  release:
+  deploymentEnvironment:
+    description: The current application environment
+    type: string
     enum:
       - dev
       - test
       - int
       - uat
       - pro
-    title: The current application environment
-    type: string
 
   message:
     description: A field for elaborating on exceptions or impairments within the system.
-    title: Exception/impairment message
     type: string
 
   components:
-    type: array
-    title: The components schema
     description: The components associated with this instance.
+    type: array
+    items: {
+      type: string
+    }
     default: [ ]
 
-  environmentConfiguration:
+  applicationConfiguration:
     type: object
-    required:
-      - splunkToken
-      - splunkUrl
-      - splunkSourceType
-      - splunkIndexName
-    properties:
-      splunkToken:
-        type: string
-      splunkUrl:
-        type: string
-      splunkSourceType:
-        type: string
-      splunkIndexName:
-        type: string
+    additionalProperties:
+      type: string
 
   features:
     type: object
-    required:
-      - splunkLogging
-      - contextLogging
-    properties:
-      splunkLogging:
-        type: boolean
-      contextLogging:
-        type: boolean
+    additionalProperties:
+      type: string
