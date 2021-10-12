@@ -128,7 +128,7 @@ definitions:
         $ref: '#/definitions/system'
       version:
         $ref: '#/definitions/version'
-      release:
+      deploymentEnvironment:
         $ref: '#/definitions/deploymentEnvironment'
       message:
         $ref: '#/definitions/message'
@@ -154,7 +154,7 @@ definitions:
     properties:
       schema:
         $ref: '#/definitions/schema'
-      configurations:
+      applicationConfiguration:
         $ref: '#/definitions/applicationConfiguration'
       features:
         $ref: '#/definitions/features'
