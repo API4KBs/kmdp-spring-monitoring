@@ -12,7 +12,7 @@
   <artifactId>kmdp-spring-monitoring</artifactId>
   <version>5.2.8-SNAPSHOT</version>
 
-  <packaging>war</packaging>
+  <packaging>jar</packaging>
 
   <name>KMDP :: SPRING :: MONITORING</name>
 
@@ -20,6 +20,17 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.mayo.kmdp</groupId>
+      <artifactId>kmdp-rest-ws-utils</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <!--SpringFox dependencies -->
@@ -32,6 +43,16 @@
       <artifactId>springfox-swagger-ui</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.ibm.db2.jcc</groupId>
+      <artifactId>db2jcc4</artifactId>
+      <version>10.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <version>7.2.2.jre11</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -60,6 +81,7 @@
                 <useTags>true</useTags>
                 <dateLibrary>java8</dateLibrary>
                 <controllersOnly>false</controllersOnly>
+                <generateAliasAsModel>true</generateAliasAsModel>
               </configOptions>
             </configuration>
           </execution>

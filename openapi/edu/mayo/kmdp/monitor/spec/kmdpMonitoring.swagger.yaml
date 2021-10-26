@@ -4,44 +4,46 @@ info:
   version: "1.0.0"
   title: 'KMDP Endpoint Monitoring API'
   license:
-    name: Apache License, Version 2.0 
-    url: https://www.apache.org/licenses/LICENSE-2.0.html  
+    name: Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
   description: |
     Reusable module that can be implemented for Java products using Spring to consolidate like code and surface the health endpoints (health, state, version) within any Java Spring implementation.
 tags:
   - name: Health
     description: |
       Return information about the application including schema version, status, system, version, environment, and components.
-    
+
   - name: Version
     description: |
       Return the version of the application.
-  
+
   - name: State
     description: |
       Return the state of the application including schema version, environment, and features.
-  
+
+produces:
+  - application/json
+
 paths:
 
-####################################################################################################
-# Health
-####################################################################################################  
+  ####################################################################################################
+  # Health
+  ####################################################################################################
 
   /health:
     get:
       tags:
-      - Health
+        - Health
       summary: Display the health of the application.
       description: |
         Return information about the application including schema version, status, system, version, environment, and components.
       operationId: getHealthData
       produces:
         - application/json
-        - application/xml
       responses:
         200:
           description: |
-             A list of application information detailing the status of the system.
+            A list of application information detailing the status of the system.
           schema:
             $ref: '#/definitions/HealthData'
         500:
@@ -65,7 +67,6 @@ paths:
       operationId: getVersionData
       produces:
         - application/json
-        - application/xml
       responses:
         200:
           description: |
@@ -93,7 +94,6 @@ paths:
       operationId: getStateData
       produces:
         - application/json
-        - application/xml
       responses:
         200:
           description: |
@@ -113,25 +113,13 @@ definitions:
   HealthData:
     description: The health endpoint schema
     type: object
-    required:
-      - schema
-      - status
-      - system
-      - version
-      - deploymentEnvironment
     properties:
-      schema:
-        $ref: '#/definitions/schema'
-      status:
-        $ref: '#/definitions/status'
-      system:
-        $ref: '#/definitions/system'
       version:
         $ref: '#/definitions/version'
       deploymentEnvironment:
         $ref: '#/definitions/deploymentEnvironment'
-      message:
-        $ref: '#/definitions/message'
+      serviceUrl:
+        $ref: '#/definitions/serviceUrl'
       components:
         $ref: '#/definitions/components'
 
@@ -147,29 +135,15 @@ definitions:
   StateData:
     description: The state endpoint schema
     type: object
-    required:
-      - schema
-      - applicationConfiguration
-      - features
     properties:
-      schema:
-        $ref: '#/definitions/schema'
-      applicationConfiguration:
-        $ref: '#/definitions/applicationConfiguration'
-      features:
-        $ref: '#/definitions/features'
-
-  schema:
-    description: The health endpoint schema
-    type: object
-    required:
-      - version
-      - url
-    properties:
-      version:
-        type: string
-      url:
-        type: string
+      buildProps:
+        $ref: '#/definitions/buildProps'
+      systemInfo:
+        $ref: '#/definitions/systemInfo'
+      implementationStrategy:
+        $ref: '#/definitions/implementationStrategy'
+      serviceNow:
+        $ref: '#/definitions/serviceNow'
 
   status:
     description: The primary signal as to the health of the service or application.
@@ -179,13 +153,8 @@ definitions:
       - Down
       - Impaired
 
-  system:
-    description: The system schema
+  serviceNow:
     type: object
-    required:
-      - id
-      - url
-      - display
     properties:
       id:
         pattern: CI*
@@ -197,6 +166,21 @@ definitions:
       display:
         description: A human-readable display name for the system
         type: string
+
+  buildProps:
+    type: object
+    additionalProperties:
+      type: string
+
+  systemInfo:
+    type: object
+    additionalProperties:
+      type: string
+
+  implementationStrategy:
+    type: object
+    additionalProperties:
+      type: string
 
   version:
     description: The current version of the system
@@ -210,26 +194,24 @@ definitions:
       - test
       - int
       - uat
-      - pro
+      - local
+      - prod
+      - unknown
 
-  message:
-    description: A field for elaborating on exceptions or impairments within the system.
-    type: string
+  serviceUrl:
+    type: object
+    properties:
+      url:
+        type: string
+      status:
+        $ref: '#/definitions/status'
 
   components:
-    description: The components associated with this instance.
-    type: array
-    items: {
-      type: string
-    }
-    default: [ ]
-
-  applicationConfiguration:
     type: object
     additionalProperties:
-      type: string
+      $ref: '#/definitions/element'
 
-  features:
+  element:
     type: object
     additionalProperties:
       type: string
