@@ -12,6 +12,10 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
+# Gets Variables from Azure DevOps Library
+variables:
+  - group: kmdp-platform-variables
+
 # ------------------ PIPELINE STEPS  ------------------
 steps:
 # Outputs pipeline steps have started
@@ -94,6 +98,16 @@ steps:
     mavenPomFile: 'pom.xml'
     goals: 'clean test'
     options: '-ntp'
+
+- task: PowerShell@2
+  displayName: 'Maven Deploy'
+  inputs:
+    targetType: 'inline'
+    script: |
+      mvn deploy "-DaltDeploymentRepository=$env:DEPLOY_REPO::default::$env:DEPLOY_REPO_PATH"
+  env:
+    DEPLOY_REPO: $(deploymentRepo)
+    DEPLOY_REPO_PATH: $(deploymentRepoPath)
 
 # ------------------ END PIPELINE  ------------------
 # Outputs pipeline steps have ended
