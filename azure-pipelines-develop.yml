@@ -1,4 +1,4 @@
-### Feature Pipeline
+### Develop Pipeline
 ### Snapshot Branch Versioning Stategy: X.X.X-SNAPSHOT
 ### No Deployments to artifacts
 ### Project :: KMDP SPRING MONITORING
@@ -91,12 +91,12 @@ steps:
     versionFilePath: pom.xml
     versionTransformation: none
 
-# Runs Maven Goal: test
+# Runs Maven Goal: install
 - task: Maven@3
-  displayName: 'Maven Test Project'
+  displayName: 'Maven Install Project'
   inputs:
     mavenPomFile: 'pom.xml'
-    goals: 'clean test'
+    goals: 'clean install'
     options: '-ntp'
 
 - task: PowerShell@2
