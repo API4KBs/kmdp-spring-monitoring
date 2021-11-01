@@ -25,11 +25,11 @@ public class HealthEndPoint implements HealthApiDelegate {
   @Autowired
   BuildProperties buildProperties;
 
-  @Value("${udpPassword}")
+  @Value("${udpPassword:pass1234}")
   private String udpPassword;
-  @Value("${clarityPassword}")
+  @Value("${clarityPassword:pass1234}")
   private String clarityPassword;
-  @Value("${mongoPassword}")
+  @Value("${mongoPassword:pass1234}")
   private String mongoPassword;
 
   private static final String STATUS = "status";
