@@ -1,75 +1,84 @@
 package edu.mayo.kmdp.health;
 
-import edu.mayo.kmdp.health.datatype.BuildProps;
-import edu.mayo.kmdp.health.datatype.ImplementationStrategy;
-import edu.mayo.kmdp.health.datatype.ServiceNow;
+import static edu.mayo.kmdp.health.utils.MonitorUtil.getBuildProps;
+import static edu.mayo.kmdp.health.utils.MonitorUtil.getServiceNowInfo;
+
+import edu.mayo.kmdp.health.datatype.Flags;
+import edu.mayo.kmdp.health.datatype.MiscProperties;
+import edu.mayo.kmdp.health.datatype.SchemaMetaInfo;
 import edu.mayo.kmdp.health.datatype.StateData;
-import edu.mayo.kmdp.health.datatype.SystemInfo;
+import edu.mayo.kmdp.health.utils.MonitorUtil;
 import edu.mayo.kmdp.health.utils.PropKey;
 import edu.mayo.kmdp.util.ws.ResponseHelper;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
-import org.springframework.core.env.Environment;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 @Component
 public class StateEndPoint implements StateApiDelegate {
 
-  @Autowired
-  private Environment environment;
+  public static final String FLAG_PREFIX = "edu.mayo.kmdp.application.flag";
 
   @Autowired
-  BuildProperties buildProperties;
+  private ConfigurableEnvironment environment;
+
+  @Autowired
+  BuildProperties build;
+
+  @Autowired(required = false)
+  Predicate<String> flagTester;
+
+  static SchemaMetaInfo schemaMetaInfo() {
+    var info = new SchemaMetaInfo();
+    info.setUrl("https://schemas.kmd.mayo.edu/state-endpoint.json");
+    info.setVersion("0.0.1");
+    return info;
+  }
 
   @Override
   public ResponseEntity<StateData> getStateData() {
-    var stateData = new StateData();
+    var state = new StateData();
+    var props = MonitorUtil.streamConvert(
+        MonitorUtil.getEnvironmentProperties(environment),
+        LinkedHashMap::new);
 
-    stateData.setBuildProps(getBuildProps());
-    stateData.setSystemInfo(getSystemInfo());
-    stateData.setImplementationStrategy(getImplementationStrategy());
-    stateData.setServiceNow(getServiceNow());
+    state.setServiceNowReference(getServiceNowInfo(environment));
+    state.setBuildConfiguration(getBuildProps(build));
+    state.setDeploymentEnvironmentConfiguration(getDeploymentProperties(props));
+    state.setFeatures(getFeatureFlags(props));
 
-    return ResponseHelper.succeed(stateData);
+    state.setSchemaInfo(schemaMetaInfo());
+
+    return ResponseHelper.succeed(state);
   }
 
-  private BuildProps getBuildProps() {
-    var buildProps = new BuildProps();
-    buildProps.put("name", buildProperties.getName());
-    buildProps.put("version", buildProperties.getVersion());
-    buildProps.put("group", buildProperties.getGroup());
-    buildProps.put("artifact", buildProperties.getArtifact());
-    buildProps.put("time", buildProperties.getTime().toString());
-    return buildProps;
+  protected Flags getFeatureFlags(Map<String, String> envProperties) {
+    var flags = new Flags();
+    envProperties.entrySet().stream()
+        .filter(e -> isFeatureFlag(e.getKey()))
+        .forEach(e -> flags.put(e.getKey(), Boolean.valueOf(e.getValue())));
+    return flags;
   }
 
-  private SystemInfo getSystemInfo() {
-    var systemInfo = new SystemInfo();
-    systemInfo.put("scanPackages", environment.getProperty(PropKey.SCAN));
-    systemInfo.put("repositoryName", environment.getProperty(PropKey.REPO_NAME));
-    systemInfo.put("repositoryId", environment.getProperty(PropKey.REPO_ID));
-    systemInfo.put("repositoryExpire", environment.getProperty(PropKey.REPO_EXPIRE));
-    systemInfo.put("repositoryPath", environment.getProperty(PropKey.REPO_PATH));
-    systemInfo.put("splunkUrl", environment.getProperty(PropKey.SPLUNK_URL));
-    systemInfo.put("splunkIndexName", environment.getProperty(PropKey.SPLUNK_INDEX));
-    systemInfo.put("splunkSourceType", environment.getProperty(PropKey.SPLUNK_SOURCE));
-    systemInfo.put("useSeparateFhirValueSetServer", environment.getProperty(PropKey.FHIR_USE_SEP));
-    return systemInfo;
+  private boolean isFeatureFlag(String key) {
+    return flagTester != null
+        ? flagTester.test(key)
+        : key.toLowerCase().startsWith(FLAG_PREFIX);
   }
 
-  private ImplementationStrategy getImplementationStrategy() {
-    var impStrat = new ImplementationStrategy();
-    impStrat.put("useSpringCache", this.environment.getProperty(PropKey.SPRING_CACHE));
-    return impStrat;
+  protected MiscProperties getDeploymentProperties(Map<String, String> envProperties) {
+    var deployProperties = new MiscProperties();
+    envProperties.entrySet().stream()
+        .filter(e -> !PropKey.isKnownProperty(e.getKey()))
+        .filter(e -> !isFeatureFlag(e.getKey()))
+        .forEach(e -> deployProperties.put(e.getKey(), e.getValue()));
+    return deployProperties;
   }
 
-  private ServiceNow getServiceNow() {
-    var serviceNow = new ServiceNow();
-    serviceNow.setId(environment.getProperty(PropKey.SN_ID));
-    serviceNow.setUrl(environment.getProperty(PropKey.SN_URL));
-    serviceNow.setDisplay(environment.getProperty(PropKey.SN_DISPLAY));
-    return serviceNow;
-  }
 
 }

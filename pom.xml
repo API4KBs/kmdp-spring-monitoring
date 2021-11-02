@@ -6,7 +6,7 @@
   <parent>
     <artifactId>kmdp-ext-api</artifactId>
     <groupId>edu.mayo.kmdp</groupId>
-    <version>10.0.9-SNAPSHOT</version>
+    <version>10.0.11-SNAPSHOT</version>
   </parent>
 
   <artifactId>kmdp-spring-monitoring</artifactId>
@@ -43,16 +43,6 @@
       <artifactId>springfox-swagger-ui</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.ibm.db2.jcc</groupId>
-      <artifactId>db2jcc4</artifactId>
-      <version>10.1</version>
-    </dependency>
-    <dependency>
-      <groupId>com.microsoft.sqlserver</groupId>
-      <artifactId>mssql-jdbc</artifactId>
-      <version>7.2.2.jre11</version>
-    </dependency>
   </dependencies>
 
   <build>
@@ -73,6 +63,7 @@
               <apiPackage>edu.mayo.kmdp.health</apiPackage>
               <modelPackage>edu.mayo.kmdp.health.datatype</modelPackage>
               <addCompileSourceRoot>true</addCompileSourceRoot>
+              <instantiationTypes>map=java.util.LinkedHashMap</instantiationTypes>
               <inputSpec>
                 ${project.basedir}/openapi/edu/mayo/kmdp/monitor/spec/kmdpMonitoring.swagger.yaml
               </inputSpec>
@@ -81,6 +72,7 @@
                 <useTags>true</useTags>
                 <dateLibrary>java8</dateLibrary>
                 <controllersOnly>false</controllersOnly>
+                <serializableModel>true</serializableModel>
                 <generateAliasAsModel>true</generateAliasAsModel>
               </configOptions>
             </configuration>

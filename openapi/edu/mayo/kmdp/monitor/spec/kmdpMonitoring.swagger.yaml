@@ -72,7 +72,7 @@ paths:
           description: |
             The version of the application
           schema:
-            $ref: '#/definitions/VersionData'
+            type: string
         500:
           description: |
             Unable to determine the version of the application.
@@ -110,50 +110,84 @@ paths:
 ####################################################################################################
 
 definitions:
+
   HealthData:
     description: The health endpoint schema
     type: object
-    properties:
-      version:
-        $ref: '#/definitions/version'
-      deploymentEnvironment:
-        $ref: '#/definitions/deploymentEnvironment'
-      serviceUrl:
-        $ref: '#/definitions/serviceUrl'
-      components:
-        $ref: '#/definitions/components'
-
-  VersionData:
-    description: The version endpoint schema
-    type: object
-    required:
-      - version
-    properties:
-      version:
-        $ref: '#/definitions/version'
+    allOf:
+      - properties:
+          schemaInfo:
+            $ref: '#/definitions/SchemaMetaInfo'
+          at:
+            type: string
+      - $ref: '#/definitions/DeployedApplication'
 
   StateData:
     description: The state endpoint schema
     type: object
     properties:
-      buildProps:
-        $ref: '#/definitions/buildProps'
-      systemInfo:
-        $ref: '#/definitions/systemInfo'
-      implementationStrategy:
-        $ref: '#/definitions/implementationStrategy'
-      serviceNow:
-        $ref: '#/definitions/serviceNow'
+      schemaInfo:
+        $ref: '#/definitions/SchemaMetaInfo'
+      serviceNowReference:
+        $ref: '#/definitions/ServiceNowInfo'
+      buildConfiguration:
+        $ref: '#/definitions/BuildInfo'
+      deploymentEnvironmentConfiguration:
+        $ref: '#/definitions/MiscProperties'
+      features:
+        $ref: '#/definitions/Flags'
 
-  status:
+
+  CommonAppInfo:
+    description: "Attributes common to Software Applications, and Components thereof"
+    # discriminator: type
+    properties:
+      #  type:
+      #    enum:
+      #      - Software Application
+      #      - Software Component
+      serviceNowReference:
+        $ref: '#/definitions/ServiceNowInfo'
+      name:
+        type: string
+      version:
+        type: string
+      status:
+        $ref: '#/definitions/Status'
+      statusMessage:
+        type: string
+      components:
+        type: array
+        items:
+          $ref: '#/definitions/ApplicationComponent'
+
+  ApplicationComponent:
+    type: object
+    allOf:
+      - $ref: '#/definitions/CommonAppInfo'
+      - type: object
+        properties:
+          details:
+            $ref: '#/definitions/MiscProperties'
+
+  DeployedApplication:
+    type: object
+    allOf:
+      - $ref: '#/definitions/CommonAppInfo'
+      - type: object
+        properties:
+          deploymentEnvironment:
+            $ref: '#/definitions/DeploymentEnvironment'
+
+  Status:
     description: The primary signal as to the health of the service or application.
     type: string
     enum:
       - Up
-      - Down
       - Impaired
+      - Down
 
-  serviceNow:
+  ServiceNowInfo:
     type: object
     properties:
       id:
@@ -167,26 +201,23 @@ definitions:
         description: A human-readable display name for the system
         type: string
 
-  buildProps:
+  BuildInfo:
     type: object
-    additionalProperties:
-      type: string
+    properties:
+      artifactName:
+        type: string
+      groupId:
+        type: string
+      artifactId:
+        type: string
+      version:
+        type: string
+      buildTime:
+        type: string
+      details:
+          $ref: '#/definitions/MiscProperties'
 
-  systemInfo:
-    type: object
-    additionalProperties:
-      type: string
-
-  implementationStrategy:
-    type: object
-    additionalProperties:
-      type: string
-
-  version:
-    description: The current version of the system
-    type: string
-
-  deploymentEnvironment:
+  DeploymentEnvironment:
     description: The current application environment
     type: string
     enum:
@@ -198,20 +229,20 @@ definitions:
       - prod
       - unknown
 
-  serviceUrl:
+  MiscProperties:
+    type: object
+    additionalProperties:
+      type: string
+
+  Flags:
+    type: object
+    additionalProperties:
+      type: boolean
+
+  SchemaMetaInfo:
     type: object
     properties:
       url:
         type: string
-      status:
-        $ref: '#/definitions/status'
-
-  components:
-    type: object
-    additionalProperties:
-      $ref: '#/definitions/element'
-
-  element:
-    type: object
-    additionalProperties:
-      type: string
+      version:
+        type: string

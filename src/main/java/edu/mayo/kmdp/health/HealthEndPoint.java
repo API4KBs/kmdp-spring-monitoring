@@ -1,17 +1,25 @@
 package edu.mayo.kmdp.health;
 
-import edu.mayo.kmdp.health.datatype.Components;
+import static edu.mayo.kmdp.health.utils.MonitorUtil.getServiceNowInfo;
+
+import edu.mayo.kmdp.health.datatype.ApplicationComponent;
 import edu.mayo.kmdp.health.datatype.DeploymentEnvironment;
-import edu.mayo.kmdp.health.datatype.Element;
 import edu.mayo.kmdp.health.datatype.HealthData;
-import edu.mayo.kmdp.health.datatype.ServiceUrl;
-import edu.mayo.kmdp.health.utils.DatabaseConnection;
-import edu.mayo.kmdp.health.utils.NlpConnection;
+import edu.mayo.kmdp.health.datatype.SchemaMetaInfo;
+import edu.mayo.kmdp.health.datatype.Status;
+import edu.mayo.kmdp.health.utils.MonitorUtil;
 import edu.mayo.kmdp.health.utils.PropKey;
-import edu.mayo.kmdp.health.utils.ServiceConnecction;
 import edu.mayo.kmdp.util.ws.ResponseHelper;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
@@ -25,173 +33,57 @@ public class HealthEndPoint implements HealthApiDelegate {
   @Autowired
   BuildProperties buildProperties;
 
-  @Value("${udpPassword:pass1234}")
-  private String udpPassword;
-  @Value("${clarityPassword:pass1234}")
-  private String clarityPassword;
-  @Value("${mongoPassword:pass1234}")
-  private String mongoPassword;
+  @Autowired(required = false)
+  List<Supplier<ApplicationComponent>> appComponentSuppliers;
 
-  private static final String STATUS = "status";
-  private static final String USER = "username";
-  private static final String URL = "url";
-  private static final String DRIVER = "driver";
+  @Autowired(required = false)
+  Function<List<ApplicationComponent>, Status> statusMapper;
+
+
+  static SchemaMetaInfo schemaMetaInfo() {
+    var info = new SchemaMetaInfo();
+    info.setUrl("https://schemas.kmd.mayo.edu/health-endpoint.json");
+    info.setVersion("0.0.1");
+    return info;
+  }
 
   @Override
   public ResponseEntity<HealthData> getHealthData() {
-    var healthData = new HealthData();
+    var health = new HealthData();
 
-    healthData.setServiceUrl(getServiceUrl());
-    healthData.setDeploymentEnvironment(getDeploymentEnvironment());
-    healthData.setVersion(buildProperties.getVersion());
-    healthData.setComponents(getComponents());
+    List<ApplicationComponent> comps = appComponentSuppliers.stream()
+        .map(Supplier::get)
+        .collect(Collectors.toList());
+    var snInfo = getServiceNowInfo(environment);
 
-    return ResponseHelper.succeed(healthData);
+    health.setName(snInfo.getDisplay());
+    health.setStatus(detectServerStatus(comps));
+    health.setDeploymentEnvironment(getDeploymentEnvironment());
+    health.setVersion(buildProperties.getVersion());
+    health.setServiceNowReference(snInfo);
+    health.setComponents(new ArrayList<>(comps));
+
+    health.setAt(MonitorUtil.formatInstant(Instant.now()));
+    health.setSchemaInfo(schemaMetaInfo());
+
+    return ResponseHelper.succeed(health);
   }
 
-  private ServiceUrl getServiceUrl() {
-    var server = new ServiceUrl();
-    var repoUrl = this.environment.getProperty(PropKey.SERVICE_URL);
-    if (repoUrl != null) {
-      server.setUrl(repoUrl);
-      var serviceConnection = new ServiceConnecction();
-      var status = serviceConnection.pingService(repoUrl);
-      server.setStatus(status);
-    }
-    return server;
+  private Status detectServerStatus(List<ApplicationComponent> comps) {
+    return statusMapper != null
+        ? statusMapper.apply(comps)
+        : MonitorUtil.defaultAggregateStatus(comps);
   }
 
-  private Components getComponents()  {
-    var components = new Components();
-    components.put("fhir", getFhirComponent());
-    components.put("nlp", getNlpComponent());
-    components.put("triotech", getTrisotechComponent());
-    components.put("kars", getKarsComponent());
-    components.put("udp", getUdpComponent());
-    components.put("clarity", getClarityComponent());
-    components.put("mongo", getMongoComponent());
-    return components;
-  }
-
-  private Element getUdpComponent() {
-    var url = this.environment.getProperty(PropKey.UDP_URL);
-    var user = this.environment.getProperty(PropKey.UDP_USER);
-    var driver = this.environment.getProperty(PropKey.UDP_DRIVER);
-    if (url != null) {
-      return getDatabaseComponent(url, user, driver, udpPassword);
-    }
-    return new Element();
-  }
-
-  private Element getClarityComponent() {
-    var url = this.environment.getProperty(PropKey.CLARITY_URL);
-    var user = this.environment.getProperty(PropKey.CLARITY_USER);
-    var driver = this.environment.getProperty(PropKey.CLARITY_DRIVER);
-    if (url != null) {
-      return getDatabaseComponent(url, user, driver, clarityPassword);
-    }
-    return new Element();
-  }
-
-  // TODO - get the mongo connection
-  private Element getMongoComponent() {
-    var element = new Element();
-    var url = this.environment.getProperty(PropKey.MONGO_URL);
-    var db = this.environment.getProperty(PropKey.MONGO_DB);
-    if (url != null) {
-      element = getServiceComponent(url);
-      element.put("database", db);
-    }
-    return element;
-  }
-
-  // TODO - get the fhir connection
-  private Element getFhirComponent() {
-    var element = new Element();
-    var url = this.environment.getProperty(PropKey.FHIR_URL);
-    var repoPrefix = this.environment.getProperty(PropKey.FHIR_PREFIX);
-    if (url != null) {
-      element = getServiceComponent(url);
-      element.put("urlPrefix", repoPrefix);
-    }
-    return element;
-  }
-
-  private Element getNlpComponent() {
-    var url = this.environment.getProperty(PropKey.NLP_URL);
-    var token = this.environment.getProperty("fhir.token");
-    if (url != null) {
-      return getNlpServiceComponent(url, token);
-    }
-    return new Element();
-  }
-
-  private Element getTrisotechComponent() {
-    var url = this.environment.getProperty(PropKey.TRISO_URL);
-    if (url != null) {
-      return getServiceComponent(url);
-    }
-    return new Element();
-  }
-
-  private Element getKarsComponent() {
-    var url = this.environment.getProperty(PropKey.KASRS_URL);
-    if (url != null) {
-      return getServiceComponent(url);
-    }
-    return new Element();
-  }
-
-  private Element getDatabaseComponent(String url, String user, String driver, String pass)  {
-    var element = new Element();
-    element.put(URL, url);
-    element.put(USER, user);
-    element.put(DRIVER, driver);
-    var databaseConnection = new DatabaseConnection();
-    var status = databaseConnection.pingDatabase(url, user, driver, pass);
-    element.put(STATUS, status.toString());
-    return element;
-  }
-
-  private Element getServiceComponent(String url)  {
-    var element = new Element();
-    element.put(URL, url);
-    var serviceConnection = new ServiceConnecction();
-    var status = serviceConnection.pingService(url);
-    element.put(STATUS, status.toString());
-    return element;
-  }
-
-  private Element getNlpServiceComponent(String url, String token)  {
-    var element = new Element();
-    element.put(URL, url);
-    var connection = new NlpConnection();
-    var status = connection.pingNlpService(url, token);
-    element.put(STATUS, status.toString());
-    return element;
-  }
-
-  private DeploymentEnvironment getDeploymentEnvironment() {
-    String env = this.environment.getProperty(PropKey.ENV);
-    if (env != null) {
-      switch (env) {
-        case "dev":
-          return DeploymentEnvironment.DEV;
-        case "test":
-          return DeploymentEnvironment.TEST;
-        case "int":
-          return DeploymentEnvironment.INT;
-        case "prod":
-          return DeploymentEnvironment.PROD;
-        case "uat":
-          return DeploymentEnvironment.UAT;
-        case "local":
-          return DeploymentEnvironment.LOCAL;
-        default:
-          return DeploymentEnvironment.UNKNOWN;
-      }
-    }
-    return DeploymentEnvironment.UNKNOWN;
+  protected DeploymentEnvironment getDeploymentEnvironment() {
+    return Stream.concat(
+            Optional.ofNullable(environment.getProperty(PropKey.ENV.getKey())).stream(),
+            Arrays.stream(environment.getActiveProfiles()))
+        .flatMap(env -> Arrays.stream(DeploymentEnvironment.values())
+            .filter(e -> e.name().equalsIgnoreCase(env))
+            .findFirst().stream())
+        .findFirst()
+        .orElse(DeploymentEnvironment.UNKNOWN);
   }
 
 }

@@ -1,6 +1,5 @@
 package edu.mayo.kmdp.health;
 
-import edu.mayo.kmdp.health.datatype.VersionData;
 import edu.mayo.kmdp.util.ws.ResponseHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
@@ -14,11 +13,9 @@ public class VersionEndPoint implements VersionApiDelegate {
   BuildProperties buildProperties;
 
   @Override
-  public ResponseEntity<VersionData> getVersionData() {
+  public ResponseEntity<String> getVersionData() {
     try {
-      var versionData = new VersionData();
-      versionData.setVersion(buildProperties.getVersion());
-      return ResponseHelper.succeed(versionData);
+      return ResponseHelper.succeed(buildProperties.getVersion());
     } catch (Exception e) {
       return ResponseHelper.fail();
     }
