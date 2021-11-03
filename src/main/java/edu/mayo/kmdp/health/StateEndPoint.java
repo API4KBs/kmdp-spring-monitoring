@@ -12,6 +12,7 @@ import edu.mayo.kmdp.health.utils.PropKey;
 import edu.mayo.kmdp.util.ws.ResponseHelper;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
@@ -32,6 +33,9 @@ public class StateEndPoint implements StateApiDelegate {
 
   @Autowired(required = false)
   Predicate<String> flagTester;
+
+  @Autowired(required = false)
+  Predicate<String> secretTester;
 
   static SchemaMetaInfo schemaMetaInfo() {
     var info = new SchemaMetaInfo();
@@ -76,8 +80,24 @@ public class StateEndPoint implements StateApiDelegate {
     envProperties.entrySet().stream()
         .filter(e -> !PropKey.isKnownProperty(e.getKey()))
         .filter(e -> !isFeatureFlag(e.getKey()))
+        .map(this::obfuscate)
         .forEach(e -> deployProperties.put(e.getKey(), e.getValue()));
     return deployProperties;
+  }
+
+  protected Entry<String, String> obfuscate(Entry<String, String> e) {
+    String key = e.getKey().toLowerCase();
+    boolean isSecret = secretTester != null
+        ? secretTester.test(key)
+        : defaultIsSecret(key);
+    if (isSecret) {
+      e.setValue(MonitorUtil.obfuscate(e.getValue(), 3));
+    }
+    return e;
+  }
+
+  protected boolean defaultIsSecret(String key) {
+    return key.contains("password") || key.contains("token") || key.contains("secret");
   }
 
 
