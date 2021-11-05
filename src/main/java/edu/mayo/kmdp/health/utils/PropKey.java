@@ -5,6 +5,7 @@ import java.util.Arrays;
 public enum PropKey {
 
   ENV("env"),
+  APP_PROPS_PREFIX("edu.mayo.kmdp.application.properties.prefix"),
 
   SN_ID("edu.mayo.kmdp.application.serviceNow.id"),
   SN_URL("edu.mayo.kmdp.application.serviceNow.url"),

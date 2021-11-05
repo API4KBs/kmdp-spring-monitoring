@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>kmdp-spring-monitoring</artifactId>
-  <version>5.2.8-SNAPSHOT</version>
+  <version>5.10.11-SNAPSHOT</version>
 
   <packaging>jar</packaging>
 

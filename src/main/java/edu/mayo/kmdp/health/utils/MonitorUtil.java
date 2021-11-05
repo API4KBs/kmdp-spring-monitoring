@@ -11,6 +11,7 @@ import edu.mayo.kmdp.util.Util;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -139,7 +140,7 @@ public final class MonitorUtil {
 
   /**
    * Gathers configuration properties from the environment
-   *
+   * <p>
    * Excludes "system" properties, to focus on "application" properties
    *
    * @param environment
@@ -159,4 +160,25 @@ public final class MonitorUtil {
   }
 
 
+  /**
+   * Retyrns application-specific environment properties, by default defined as properties whose
+   * names start with a prefix, itself defined by the value of the well-known property {@link
+   * PropKey#APP_PROPS_PREFIX}
+   *
+   * @param env
+   * @return
+   */
+  public static Map<String, String> getAppProperties(ConfigurableEnvironment env) {
+    String prefix = env.getProperty(PropKey.APP_PROPS_PREFIX.key);
+    if (prefix == null) {
+      return Collections.emptyMap();
+    }
+    Properties props = getEnvironmentProperties(env);
+    return props.stringPropertyNames().stream()
+        .filter(name -> name.startsWith(prefix))
+        .collect(Collectors.toMap(
+            n -> n,
+            n -> (String) props.get(n)
+        ));
+  }
 }
