@@ -8,6 +8,15 @@
 trigger: 
 - develop
 
+# Watches upstream build for success to run
+resources:
+  pipelines:
+  - pipeline: kmdpSpringMonitoringDevelop
+    source: kmdpExtApiDevelop
+    trigger: 
+      branches:
+      - develop
+
 # Sets Virtual Machine to Run Pipeline on
 pool:
   vmImage: 'ubuntu-latest'
