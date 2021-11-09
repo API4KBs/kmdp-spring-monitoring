@@ -6,11 +6,11 @@
   <parent>
     <artifactId>kmdp-ext-api</artifactId>
     <groupId>edu.mayo.kmdp</groupId>
-    <version>10.0.11-SNAPSHOT</version>
+    <version>10.0.12-SNAPSHOT</version>
   </parent>
 
   <artifactId>kmdp-spring-monitoring</artifactId>
-  <version>5.10.11-SNAPSHOT</version>
+  <version>5.10.12-SNAPSHOT</version>
 
   <packaging>jar</packaging>
 
