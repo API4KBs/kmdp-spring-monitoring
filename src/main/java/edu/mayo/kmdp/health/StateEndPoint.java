@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.http.ResponseEntity;
@@ -32,9 +33,11 @@ public class StateEndPoint implements StateApiDelegate {
   BuildProperties build;
 
   @Autowired(required = false)
+  @Qualifier("flag")
   Predicate<String> flagTester;
 
   @Autowired(required = false)
+  @Qualifier("secret")
   Predicate<String> secretTester;
 
   static SchemaMetaInfo schemaMetaInfo() {
