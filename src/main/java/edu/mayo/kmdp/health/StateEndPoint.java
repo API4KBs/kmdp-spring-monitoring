@@ -32,14 +32,27 @@ public class StateEndPoint implements StateApiDelegate {
   @Autowired
   BuildProperties build;
 
+  /**
+   * Application specific Predicate bean Provides logic for identifying 'feature flag' application
+   * properties Feature flags are boolean properties that enable/disable application capabilities
+   */
   @Autowired(required = false)
   @Qualifier("flag")
   Predicate<String> flagTester;
 
+  /**
+   * Application specific Predicate bean Provides logic for identifying 'secret' application
+   * properties Secret properties need to be obfuscated
+   */
   @Autowired(required = false)
   @Qualifier("secret")
   Predicate<String> secretTester;
 
+  /**
+   * Metadata about the {@link StateData} schema used to report information
+   *
+   * @return SchemaMetaInfo for {@link StateData}
+   */
   static SchemaMetaInfo schemaMetaInfo() {
     var info = new SchemaMetaInfo();
     info.setUrl("https://schemas.kmd.mayo.edu/state-endpoint.json");
@@ -47,6 +60,12 @@ public class StateEndPoint implements StateApiDelegate {
     return info;
   }
 
+  /**
+   * Collects {@link StateData} information for the application, as of the time the application was
+   * loaded
+   *
+   * @return the StateData payload
+   */
   @Override
   public ResponseEntity<StateData> getStateData() {
     var state = new StateData();
@@ -64,6 +83,15 @@ public class StateEndPoint implements StateApiDelegate {
     return ResponseHelper.succeed(state);
   }
 
+  /**
+   * Extracts the subset of configuration properties that are feature flags
+   * <p>
+   * Uses the application-provided filter if present, otherwise falls back to a default strategy
+   *
+   * @param envProperties The environment configuration properties
+   * @return the feature flags
+   * @see #isFeatureFlag(String)
+   */
   protected Flags getFeatureFlags(Map<String, String> envProperties) {
     var flags = new Flags();
     envProperties.entrySet().stream()
@@ -72,6 +100,14 @@ public class StateEndPoint implements StateApiDelegate {
     return flags;
   }
 
+  /**
+   * Predicate that determines whether a property is a feature flag or not based on its name
+   * Delegates to the application-provided logic, if present Otherwise, checks whether the property
+   * name starts with {@link #FLAG_PREFIX}
+   *
+   * @param key the configuration property name
+   * @return true if the property is a feature flag
+   */
   private boolean isFeatureFlag(String key) {
     return flagTester != null
         ? flagTester.test(key)
@@ -88,6 +124,17 @@ public class StateEndPoint implements StateApiDelegate {
     return deployProperties;
   }
 
+  /**
+   * Checks whether a property needs to be obfuscated and, if so, replaces the characters of the
+   * property value with '*', minus the first three characters for partial transparency Properties
+   * are selected based on an application-specific predicate, if present. Otherwise, uses a default
+   * strategy
+   *
+   * @param e a key/value pair that represents the configuration property and its value
+   * @return the key/value, where the value has been obfuscated if necessary
+   * @see MonitorUtil#obfuscate(String, int)
+   * @see #defaultIsSecret(String)
+   */
   protected Entry<String, String> obfuscate(Entry<String, String> e) {
     String key = e.getKey().toLowerCase();
     boolean isSecret = secretTester != null
@@ -99,6 +146,12 @@ public class StateEndPoint implements StateApiDelegate {
     return e;
   }
 
+  /**
+   * Checks the property name for the presence of "password", "token" or "secret"
+   *
+   * @param key The property name to be tested
+   * @return true if the property is considered to be secret, thus needing obfuscation
+   */
   protected boolean defaultIsSecret(String key) {
     return key.contains("password") || key.contains("token") || key.contains("secret");
   }
