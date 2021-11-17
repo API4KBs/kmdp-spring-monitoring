@@ -151,11 +151,26 @@ public final class MonitorUtil {
     MutablePropertySources propSrcs = environment.getPropertySources();
     StreamSupport.stream(propSrcs.spliterator(), false)
         .filter(ps -> ps instanceof EnumerablePropertySource)
+        // exclude 'system' sources which include all the OS/VM related properties...
         .filter(ps -> !"systemEnvironment".equals(ps.getName()))
         .filter(ps -> !"systemProperties".equals(ps.getName()))
         .map(ps -> ((EnumerablePropertySource<?>) ps).getPropertyNames())
         .flatMap(Arrays::stream)
         .forEach(propName -> props.setProperty(propName, environment.getProperty(propName)));
+
+    // ...except for ensuring CATALINA_OPTS is pulled despite being 'system'
+    String opts = environment.getProperty("CATALINA_OPTS");
+    if (opts != null) {
+      Arrays.stream(opts.split("\\s"))
+          .filter(Util::isNotEmpty)
+          .map(s -> s.replace("-D", ""))
+          .filter(p -> p.contains("="))
+          .forEach(p -> {
+            int eq = p.indexOf('=');
+            String key = p.substring(0, eq);
+            props.setProperty(key, environment.getProperty(key));
+          });
+    }
     return props;
   }
 
