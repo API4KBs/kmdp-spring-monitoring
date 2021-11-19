@@ -6,7 +6,17 @@
 # !! No Downstream Builds !! #
 
 trigger: 
-- develop
+  branches:
+    include:
+      - develop
+    exclude:
+      - feature*
+  paths:
+    exclude:
+      - azure-pipelines-develop.yml
+      - azure-pipelines-features.yml
+      - release-notes.md
+      - README.md
 
 # Watches upstream build for success to run
 resources:
