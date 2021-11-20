@@ -148,6 +148,9 @@ public final class MonitorUtil {
    */
   public static Properties getEnvironmentProperties(ConfigurableEnvironment environment) {
     Properties props = new Properties();
+    if (environment == null) {
+      return props;
+    }
     MutablePropertySources propSrcs = environment.getPropertySources();
     StreamSupport.stream(propSrcs.spliterator(), false)
         .filter(ps -> ps instanceof EnumerablePropertySource)
@@ -168,7 +171,10 @@ public final class MonitorUtil {
           .forEach(p -> {
             int eq = p.indexOf('=');
             String key = p.substring(0, eq);
-            props.setProperty(key, environment.getProperty(key));
+            String val = environment.getProperty(key);
+            if (val != null) {
+              props.setProperty(key, val);
+            }
           });
     }
     return props;
