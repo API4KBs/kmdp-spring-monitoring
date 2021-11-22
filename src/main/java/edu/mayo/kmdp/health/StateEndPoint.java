@@ -2,6 +2,7 @@ package edu.mayo.kmdp.health;
 
 import static edu.mayo.kmdp.health.utils.MonitorUtil.getBuildProps;
 import static edu.mayo.kmdp.health.utils.MonitorUtil.getServiceNowInfo;
+import static edu.mayo.kmdp.util.Util.isEmpty;
 
 import edu.mayo.kmdp.health.datatype.Flags;
 import edu.mayo.kmdp.health.datatype.MiscProperties;
@@ -14,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.info.BuildProperties;
@@ -102,7 +104,7 @@ public class StateEndPoint implements StateApiDelegate {
 
   /**
    * Predicate that determines whether a property is a feature flag or not based on its name
-   * Delegates to the application-provided logic, if present Otherwise, checks whether the property
+   * Delegates to the application-provided logic, if present. Otherwise, checks whether the property
    * name starts with {@link #FLAG_PREFIX}
    *
    * @param key the configuration property name
@@ -114,14 +116,59 @@ public class StateEndPoint implements StateApiDelegate {
         : key.toLowerCase().startsWith(FLAG_PREFIX);
   }
 
+  /**
+   * Predicate that determines whether a property is a secret or not based on its name Delegates to
+   * the application-provided logic, if present. Otherwise, checks whether the property name
+   * contains "token", "secret" or "pasword".
+   *
+   * @param key the configuration property name
+   * @return true if the property is a secret that should be obfuscated
+   */
+  private boolean isSecret(String key) {
+    return secretTester != null
+        ? secretTester.test(key)
+        : defaultIsSecret(key);
+  }
+
   protected MiscProperties getDeploymentProperties(Map<String, String> envProperties) {
     var deployProperties = new MiscProperties();
+
+    Map<String, String> secrets = envProperties.entrySet().stream()
+        .filter(e -> isSecret(e.getKey()))
+        .collect(Collectors.toMap(Entry::getValue, Entry::getKey));
+
     envProperties.entrySet().stream()
         .filter(e -> !PropKey.isKnownProperty(e.getKey()))
         .filter(e -> !isFeatureFlag(e.getKey()))
         .map(this::obfuscate)
-        .forEach(e -> deployProperties.put(e.getKey(), e.getValue()));
+        .forEach(e -> deployProperties.put(e.getKey(), cleanse(e.getValue(), e.getKey(), secrets)));
     return deployProperties;
+  }
+
+  /**
+   * Removes secrets from the value of other properties.
+   * <p>
+   * Prevents situations where secrets are embedded in other non-secret properties
+   * <p>
+   * This method excludes the secret properties themselves, whose value should have been obfuscated
+   * at this point. That is, if 'my.secret=XYZ' was a secret property, one would have
+   * 'key=my.secret', 'value='X**', 'secrets={XYZ=my.secret}'.
+   *
+   * @param value   The value of a (non-secret) property
+   * @param key     The name of the (non-secret) property
+   * @param secrets The values of the secret properties
+   * @return The value of the (non-secret) property, with any secret component obfuscated
+   */
+  protected String cleanse(String value, String key, Map<String,String> secrets) {
+    if (isSecret(key) || isEmpty(value)) {
+      return value;
+    }
+    for (String secret : secrets.keySet()) {
+      if (value.contains(secret)) {
+        value = value.replaceAll(secret, "**" + secrets.get(secret) + "**");
+      }
+    }
+    return value;
   }
 
   /**
@@ -137,10 +184,7 @@ public class StateEndPoint implements StateApiDelegate {
    */
   protected Entry<String, String> obfuscate(Entry<String, String> e) {
     String key = e.getKey().toLowerCase();
-    boolean isSecret = secretTester != null
-        ? secretTester.test(key)
-        : defaultIsSecret(key);
-    if (isSecret) {
+    if (isSecret(key)) {
       e.setValue(MonitorUtil.obfuscate(e.getValue(), 3));
     }
     return e;
@@ -153,7 +197,7 @@ public class StateEndPoint implements StateApiDelegate {
    * @return true if the property is considered to be secret, thus needing obfuscation
    */
   protected boolean defaultIsSecret(String key) {
-    return key.contains("password") || key.contains("token") || key.contains("secret");
+    return MonitorUtil.defaultIsSecret(key);
   }
 
 

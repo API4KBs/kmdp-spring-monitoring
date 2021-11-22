@@ -57,7 +57,9 @@ public final class MonitorUtil {
     buildProps.setVersion(build.getVersion());
     buildProps.setGroupId(build.getGroup());
     buildProps.setArtifactId(build.getArtifact());
-    buildProps.setBuildTime(formatInstant(build.getTime()));
+    if (build.getTime() != null) {
+      buildProps.setBuildTime(formatInstant(build.getTime()));
+    }
     return buildProps;
   }
 
@@ -201,5 +203,18 @@ public final class MonitorUtil {
             n -> n,
             n -> (String) props.get(n)
         ));
+  }
+
+  /**
+   * Default function that can be used to determine which properties are secrets Looks for
+   * "password", "token" or "secret" in the property name. The lookup is case insensitive.
+   *
+   * @param key the property name to be tested
+   * @return true if "password", "token" or "secret" is found anywhere in the property name (case
+   * insensitive)
+   */
+  public static boolean defaultIsSecret(String key) {
+    String k = key.toLowerCase();
+    return k.contains("password") || k.contains("token") || k.contains("secret");
   }
 }

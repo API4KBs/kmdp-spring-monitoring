@@ -4,7 +4,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>kmdp-ext-api</artifactId>
+    <artifactId>kmdp-bom</artifactId>
     <groupId>edu.mayo.kmdp</groupId>
     <version>11.0.3-SNAPSHOT</version>
   </parent>
@@ -41,6 +41,22 @@
     <dependency>
       <groupId>io.springfox</groupId>
       <artifactId>springfox-swagger-ui</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.mayo.kmdp</groupId>
+      <artifactId>kmdp-test-utils</artifactId>
     </dependency>
 
   </dependencies>
