@@ -3,6 +3,7 @@ package edu.mayo.kmdp.health;
 import static edu.mayo.kmdp.health.utils.MonitorUtil.getBuildProps;
 import static edu.mayo.kmdp.health.utils.MonitorUtil.getServiceNowInfo;
 import static edu.mayo.kmdp.util.Util.isEmpty;
+import static edu.mayo.kmdp.util.Util.isNotEmpty;
 
 import edu.mayo.kmdp.health.datatype.Flags;
 import edu.mayo.kmdp.health.datatype.MiscProperties;
@@ -164,7 +165,8 @@ public class StateEndPoint implements StateApiDelegate {
       return value;
     }
     for (String secret : secrets.keySet()) {
-      if (value.contains(secret)) {
+      // do not rewrite empty or 'mock' secrets that would occur naturally
+      if (isNotEmpty(secret) && secret.length() > 2 && value.contains(secret)) {
         value = value.replaceAll(secret, "**" + secrets.get(secret) + "**");
       }
     }
