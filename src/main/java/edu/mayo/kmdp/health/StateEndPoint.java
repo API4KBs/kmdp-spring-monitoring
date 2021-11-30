@@ -27,8 +27,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class StateEndPoint implements StateApiDelegate {
 
-  public static final String FLAG_PREFIX = "edu.mayo.kmdp.application.flag";
-
   @Autowired
   private ConfigurableEnvironment environment;
 
@@ -114,7 +112,7 @@ public class StateEndPoint implements StateApiDelegate {
   private boolean isFeatureFlag(String key) {
     return flagTester != null
         ? flagTester.test(key)
-        : key.toLowerCase().startsWith(FLAG_PREFIX);
+        : defaultIsFlag(key);
   }
 
   /**
@@ -200,6 +198,16 @@ public class StateEndPoint implements StateApiDelegate {
    */
   protected boolean defaultIsSecret(String key) {
     return MonitorUtil.defaultIsSecret(key);
+  }
+
+  /**
+   * Checks the property name for the presence of "flag."
+   *
+   * @param key The property name to be tested
+   * @return true if the property is considered to be a feature flag
+   */
+  protected boolean defaultIsFlag(String key) {
+    return MonitorUtil.defaultIsFlag(key);
   }
 
 

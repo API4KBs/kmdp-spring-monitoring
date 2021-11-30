@@ -206,8 +206,10 @@ public final class MonitorUtil {
   }
 
   /**
-   * Default function that can be used to determine which properties are secrets Looks for
-   * "password", "token" or "secret" in the property name. The lookup is case insensitive.
+   * Default function that can be used to determine which properties are secrets.
+   * <p>
+   * Looks for "password", "token" or "secret" in the property name. The lookup is case
+   * insensitive.
    *
    * @param key the property name to be tested
    * @return true if "password", "token" or "secret" is found anywhere in the property name (case
@@ -216,5 +218,19 @@ public final class MonitorUtil {
   public static boolean defaultIsSecret(String key) {
     String k = key.toLowerCase();
     return k.contains("password") || k.contains("token") || k.contains("secret");
+  }
+
+  /**
+   * Default function that can be used to determine which properties are feature flags.
+   * <p>
+   * Looks for "flag.", "feature.flag" in the property name. The lookup is case insensitive.
+   *
+   * @param key the property name to be tested
+   * @return true if "flag.", "feature.flag" is found anywhere in the property name (case
+   * insensitive)
+   */
+  public static boolean defaultIsFlag(String key) {
+    String k = key.toLowerCase();
+    return k.contains("flag.") || k.contains("feature.flag");
   }
 }
