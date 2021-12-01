@@ -216,6 +216,9 @@ public final class MonitorUtil {
    * insensitive)
    */
   public static boolean defaultIsSecret(String key) {
+    if (key == null) {
+      return false;
+    }
     String k = key.toLowerCase();
     return k.contains("password") || k.contains("token") || k.contains("secret");
   }
@@ -230,6 +233,9 @@ public final class MonitorUtil {
    * insensitive)
    */
   public static boolean defaultIsFlag(String key) {
+    if (key == null) {
+      return false;
+    }
     String k = key.toLowerCase();
     return k.contains("flag.") || k.contains("feature.flag");
   }

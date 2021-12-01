@@ -9,7 +9,6 @@ import edu.mayo.kmdp.health.datatype.SchemaMetaInfo;
 import edu.mayo.kmdp.health.datatype.Status;
 import edu.mayo.kmdp.health.utils.MonitorUtil;
 import edu.mayo.kmdp.health.utils.PropKey;
-import edu.mayo.kmdp.util.ws.ResponseHelper;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,9 +28,9 @@ import org.springframework.stereotype.Component;
 public class HealthEndPoint implements HealthApiDelegate {
 
   @Autowired
-  private Environment environment;
+  protected Environment environment;
   @Autowired
-  BuildProperties buildProperties;
+  protected BuildProperties buildProperties;
 
   /**
    * Application-specific bean to supply component descriptors
@@ -88,7 +87,7 @@ public class HealthEndPoint implements HealthApiDelegate {
     health.setAt(MonitorUtil.formatInstant(Instant.now()));
     health.setSchemaInfo(schemaMetaInfo());
 
-    return ResponseHelper.succeed(health);
+    return ResponseEntity.ok(health);
   }
 
   /**

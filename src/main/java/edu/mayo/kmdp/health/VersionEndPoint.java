@@ -1,8 +1,8 @@
 package edu.mayo.kmdp.health;
 
-import edu.mayo.kmdp.util.ws.ResponseHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
@@ -10,14 +10,14 @@ import org.springframework.stereotype.Component;
 public class VersionEndPoint implements VersionApiDelegate {
 
   @Autowired
-  BuildProperties buildProperties;
+  protected BuildProperties buildProperties;
 
   @Override
   public ResponseEntity<String> getVersionData() {
     try {
-      return ResponseHelper.succeed(buildProperties.getVersion());
+      return ResponseEntity.ok(buildProperties.getVersion());
     } catch (Exception e) {
-      return ResponseHelper.fail();
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
   }
 }

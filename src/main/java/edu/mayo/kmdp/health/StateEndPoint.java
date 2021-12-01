@@ -11,7 +11,6 @@ import edu.mayo.kmdp.health.datatype.SchemaMetaInfo;
 import edu.mayo.kmdp.health.datatype.StateData;
 import edu.mayo.kmdp.health.utils.MonitorUtil;
 import edu.mayo.kmdp.health.utils.PropKey;
-import edu.mayo.kmdp.util.ws.ResponseHelper;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,10 +27,10 @@ import org.springframework.stereotype.Component;
 public class StateEndPoint implements StateApiDelegate {
 
   @Autowired
-  private ConfigurableEnvironment environment;
+  protected ConfigurableEnvironment environment;
 
   @Autowired
-  BuildProperties build;
+  protected BuildProperties build;
 
   /**
    * Application specific Predicate bean Provides logic for identifying 'feature flag' application
@@ -39,7 +38,7 @@ public class StateEndPoint implements StateApiDelegate {
    */
   @Autowired(required = false)
   @Qualifier("flag")
-  Predicate<String> flagTester;
+  protected Predicate<String> flagTester;
 
   /**
    * Application specific Predicate bean Provides logic for identifying 'secret' application
@@ -47,7 +46,7 @@ public class StateEndPoint implements StateApiDelegate {
    */
   @Autowired(required = false)
   @Qualifier("secret")
-  Predicate<String> secretTester;
+  protected Predicate<String> secretTester;
 
   /**
    * Metadata about the {@link StateData} schema used to report information
@@ -81,7 +80,7 @@ public class StateEndPoint implements StateApiDelegate {
 
     state.setSchemaInfo(schemaMetaInfo());
 
-    return ResponseHelper.succeed(state);
+    return ResponseEntity.ok(state);
   }
 
   /**
