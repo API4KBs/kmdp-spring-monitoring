@@ -29,6 +29,7 @@ public class HealthEndPoint implements HealthApiDelegate {
 
   @Autowired
   protected Environment environment;
+
   @Autowired
   protected BuildProperties buildProperties;
 
